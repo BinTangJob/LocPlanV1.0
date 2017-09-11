@@ -29,6 +29,7 @@ public:
 	//¶¨Òåº¯Êı
 	Locplan(int num,char** namelist,double* arealist);
 	bool Getinidata(double &enlist, double &exlist, double start, double end,double uplength,double downlength);
+	//test github
 };
 
 
