@@ -467,7 +467,7 @@ double mypartialsum(std::vector<double> fitness, std::vector<double>& roulette)
 	return sum;
 }
 
-std::vector<std::vector<int>> Locplan::GAselection(std::vector<std::vector<int>> parents, bool isElitistStrategy,int &best,double &bestval)
+std::vector<std::vector<int>> Locplan::GAselection(int groupnum,std::vector<std::vector<int>> parents, bool isElitistStrategy,int &best,double &bestval)
 {
 	std::vector<std::vector<int>> res;
 	//轮盘赌算法
@@ -476,7 +476,7 @@ std::vector<std::vector<int>> Locplan::GAselection(std::vector<std::vector<int>>
 	std::vector<double> fitness = GAfitness(1.0, parents, bestsolution, bestval);
 	std::vector<double> roulette;
 	double sum = mypartialsum(fitness, roulette);
-	for (size_t i = 0; i < parents.size(); i++)
+	for (size_t i = 0; i < groupnum; i++)
 	{
 		//srand((unsigned)time(NULL));
 		double bid = double(rand()) / RAND_MAX;
@@ -497,7 +497,7 @@ std::vector<std::vector<int>> Locplan::GAselection(std::vector<std::vector<int>>
 	if (isElitistStrategy && !bestinnext)
 	{
 		//srand((unsigned)time(NULL));
-		int point = rand() % parents.size();
+		int point = rand() % groupnum;
 		res[point] = parents[bestsolution];
 		best = point;
 	}
@@ -510,7 +510,7 @@ std::vector<double> Locplan::GAfitness(double fitnessindex, std::vector<std::vec
 	std::vector<double> res;
 	for (size_t i=0;i<solutions.size();i++)
 	{
-		double fitness = std::pow(Calsolutiondistance(solutions[i])*0.001, -fitnessindex);
+		double fitness = std::pow(Calsolutiondistance(solutions[i])*0.001-8, -fitnessindex);
 		if (fitness > val)
 		{
 			val = fitness;
@@ -525,6 +525,8 @@ std::vector<double> Locplan::GAfitness(double fitnessindex, std::vector<std::vec
 std::vector<int> Locplan::GA(int groupnum, int maxiters,int endflag,double emutationrate, double crossrate, bool isElitistStrategy)
 {
 	//生成初始种群
+	std::vector<int> historybest;
+	double historybestval=0.0;
 	int bestsol;
 	int stablenum = 0;
 	double prebestval=1.0e8;
@@ -551,7 +553,7 @@ std::vector<int> Locplan::GA(int groupnum, int maxiters,int endflag,double emuta
 		}*/
 		//选择
 		double bestval;
-		group = GAselection(group, isElitistStrategy,bestsol,bestval);
+		group = GAselection(groupnum,group, isElitistStrategy,bestsol,bestval);
 		std::vector<std::vector<int> > groupNextGenerateion(group);
 		int couplecount = 0;
 		int parent1 = -1;
@@ -589,6 +591,8 @@ std::vector<int> Locplan::GA(int groupnum, int maxiters,int endflag,double emuta
 						continue;
 					parent2 = i;
 					std::vector<std::vector<int> > children = GAcross(group[parent1], group[parent2]);
+					//groupNextGenerateion.push_back(children[0]);
+					//groupNextGenerateion.push_back(children[1]);
 					groupNextGenerateion[parent1] = children[0];
 					groupNextGenerateion[parent2] = children[1];
 					couplecount++;
@@ -614,6 +618,7 @@ std::vector<int> Locplan::GA(int groupnum, int maxiters,int endflag,double emuta
 				if (isElitistStrategy&&bestsol == i)
 					continue;
 				std::vector<int> newsol = GAmutation(groupNextGenerateion[i]);
+				//groupNextGenerateion.push_back(newsol);
 				groupNextGenerateion[i] = newsol;
 			}
 		}
@@ -627,8 +632,13 @@ std::vector<int> Locplan::GA(int groupnum, int maxiters,int endflag,double emuta
 		prebestval = bestval;
 		iters++;
 		group = groupNextGenerateion;
+		if (historybestval < bestval)
+		{
+			historybestval = bestval;
+			historybest = group[bestsol];
+		}
 	}
-	return group[bestsol];
+	return historybest;
 }
 
 

@@ -91,7 +91,7 @@ private:
 	//突变算子
 	std::vector<int> GAmutation(std::vector<int> solution);
 	//选择算子
-	std::vector<std::vector<int> >  GAselection(std::vector<std::vector<int> > parents,bool isElitistStrategy,int &best,double &bestval);
+	std::vector<std::vector<int> >  GAselection(int groupnum,std::vector<std::vector<int> > parents,bool isElitistStrategy,int &best,double &bestval);
 	//适应度计算
 	std::vector<double> GAfitness(double fitnessindex, std::vector<std::vector<int> > solutions,int &best,double &bestval);
 

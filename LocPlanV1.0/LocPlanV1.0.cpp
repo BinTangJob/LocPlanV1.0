@@ -56,7 +56,7 @@ int main()
 	std::vector<int > greedySolution = myplan.GetGreedySolotion();
 	std::cout << "greedysolution is "<<myplan.evaluation(greedySolution)<<std::endl;
 	//ÒÅ´«Ëã·¨
-	std::vector<int > GASolution = myplan.GA(500,100000,500,0.02,0.6,false);
+	std::vector<int > GASolution = myplan.GA(500,5000,500,0.02,0.6,true);
 	std::cout << "final GAsolution is " << myplan.evaluation(GASolution) << std::endl;
     return 0;
 }
