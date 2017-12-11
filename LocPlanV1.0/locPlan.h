@@ -10,6 +10,7 @@
 #include<algorithm>
 #include<list>
 #include<iostream>
+#include <fstream>
 
 using namespace std;
 
@@ -69,7 +70,7 @@ public:
 	bool Getinidata(double * entrancelist, int entrancenum, double * exitlist, int exitnum, int rownum, double rowloc[][2]);
 	//test github
 	//遗传算法
-	std::vector<int> GA(int groupnum, int maxiters, int endflag, double emutationrate, double crossrate, bool isElitistStrategy);
+	std::vector<int> GA(int groupnum, int maxiters, int endflag, double emutationrate, double crossrate, bool isElitistStrategy, string logfile);
 	//贪心算法
 	std::vector<int> GetGreedySolotion();
 	//评价结果

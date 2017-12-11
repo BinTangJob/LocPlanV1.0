@@ -522,8 +522,10 @@ std::vector<double> Locplan::GAfitness(double fitnessindex, std::vector<std::vec
 	return res;
 }
 //遗传算法
-std::vector<int> Locplan::GA(int groupnum, int maxiters,int endflag,double emutationrate, double crossrate, bool isElitistStrategy)
+std::vector<int> Locplan::GA(int groupnum, int maxiters,int endflag,double emutationrate, double crossrate, bool isElitistStrategy, string logfile)
 {
+	std::ofstream outfile;
+	outfile.open(logfile);
 	//生成初始种群
 	std::vector<int> historybest;
 	double historybestval=0.0;
@@ -627,8 +629,11 @@ std::vector<int> Locplan::GA(int groupnum, int maxiters,int endflag,double emuta
 			stablenum++;
 		else
 			stablenum = 0;
-		std::cout << "iter " << iters << " is " << bestval << endl;
-		cout << "stable num is " << stablenum << endl;
+		//std::cout << "iter " << iters << " is " << bestval << endl;
+		//cout << "stable num is " << stablenum << endl;
+		outfile << "iter " << iters << " is " << bestval << " ";
+		outfile << "sumdistance  is " << evaluation(historybest) << endl;
+		//outfile << "stable num is " << stablenum << endl;
 		prebestval = bestval;
 		iters++;
 		group = groupNextGenerateion;
@@ -638,6 +643,7 @@ std::vector<int> Locplan::GA(int groupnum, int maxiters,int endflag,double emuta
 			historybest = group[bestsol];
 		}
 	}
+	outfile.close();
 	return historybest;
 }
 
