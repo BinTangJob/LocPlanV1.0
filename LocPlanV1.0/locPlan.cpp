@@ -510,7 +510,7 @@ std::vector<double> Locplan::GAfitness(double fitnessindex, std::vector<std::vec
 	std::vector<double> res;
 	for (size_t i=0;i<solutions.size();i++)
 	{
-		double fitness = std::pow(Calsolutiondistance(solutions[i])*0.001-8, -fitnessindex);
+		double fitness = std::pow(Calsolutiondistance(solutions[i])*0.001, -fitnessindex);
 		if (fitness > val)
 		{
 			val = fitness;
@@ -628,11 +628,14 @@ std::vector<int> Locplan::GA(int groupnum, int maxiters,int endflag,double emuta
 		if (abs(bestval - prebestval) < ZERO)
 			stablenum++;
 		else
+		{
+			outfile << "iter " << iters << " is " << bestval << " ";
+			outfile << "sumdistance  is " << evaluation(historybest) << endl;
 			stablenum = 0;
+		}
+			
 		//std::cout << "iter " << iters << " is " << bestval << endl;
 		//cout << "stable num is " << stablenum << endl;
-		outfile << "iter " << iters << " is " << bestval << " ";
-		outfile << "sumdistance  is " << evaluation(historybest) << endl;
 		//outfile << "stable num is " << stablenum << endl;
 		prebestval = bestval;
 		iters++;
