@@ -8,21 +8,32 @@
 #include <iostream>
 #include <unordered_map>
 
+//库房设计数据结构体
+/*
+----------------------------------
+该结构体只是适用于二行库房区域设计
+----------------------------------
+*/
 struct desighnode
 {
-	int entrancenum;
-	vector<double> entraloc;
-	int exitnum;
-	vector<double> exitloc;
-	double rowloc[2][2];
+	int entrancenum;//入库门数目
+	vector<double> entraloc;//入库门X坐标
+	int exitnum;//出库门数目
+	vector<double> exitloc;//出库门X坐标
+	double rowloc[2][2];//库区两行的起始终点坐标
 };
-
+//冲压件成品物流参数
+/*
+---------------------------------
+该结构体用于构造成品字典数据结构的Value值
+---------------------------------
+*/
 struct systemnode
 {
-	int line;
-	int entrancepackage;
-	int exitpackage;
-	double area;
+	int line;//产线
+	int entrancepackage;//入库每车零件量
+	int exitpackage;//出库每拖零件量
+	double area;//库区长度，此处为：库区长度=库区面积/库区宽度
 
 };
 struct inpnode 
@@ -38,14 +49,14 @@ struct inpnode
 	double odistance;//出库负载距离
 	
 };
-typedef unordered_map<string, systemnode> sysmap;
-typedef unordered_map<string, inpnode> inpmap;
+typedef unordered_map<string, systemnode> sysmap;//零件编码-冲压件成品物流参数字典
+typedef unordered_map<string, inpnode> inpmap;//零件编码-仿真物流参数字典
 //根据（单层）盛具数量计算及盛具尺寸计算零件占库大小
 double getArea(int N, double width, double lenth,double loclenth)
 {
 	return 0.0;
 }
-//读入
+//从系统文件中读取库房设计数据
 bool getdesighdatafromfile(string desfile, desighnode &dnode)
 {
 	std::ifstream infile;
@@ -99,11 +110,11 @@ bool getdesighdatafromfile(string desfile, desighnode &dnode)
 	{
 		infile.getline(strtemp, 128, ',');
 		double exloc = atof(strtemp);
-		dnode.entraloc.push_back(enloc);
+		dnode.exitloc.push_back(exloc);
 	}
 	infile.getline(strtemp, 128, '\n');
     double exloc = atof(strtemp);
-	dnode.entraloc.push_back(enloc);
+	dnode.entraloc.push_back(exloc);
 	//读取库位坐标
 	infile.getline(strtemp, 128, ',');
 	double loc1 = atof(strtemp);
@@ -119,6 +130,8 @@ bool getdesighdatafromfile(string desfile, desighnode &dnode)
 	dnode.rowloc[1][1] = loc4;
 	return true;
 }
+
+//固定库房设计数据
 bool getflexsimmodedata(desighnode &dnode)
 {
 	dnode.entrancenum = 3;//入口数量
@@ -132,13 +145,14 @@ bool getflexsimmodedata(desighnode &dnode)
 	//myplan.Getinidata(entraloc, entrancenum, exitloc, exitnum, 2, rowloc);
 	return true;
 }
+//读取系统物流文件中的数据
 bool getsystemdata(string filename,sysmap &systempars)
 {
 	std::ifstream infile;
 	infile.open(filename);
 	if (infile.fail())
 	{
-		cout << "打开系统设置文件"<<filename<< "失败，请检查文件名" << endl;
+		cout << "打开系统物流设置文件"<<filename<< "失败，请检查文件名" << endl;
 		return false;
 	}
 	char title[256];
@@ -176,6 +190,10 @@ bool getsystemdata(string filename,sysmap &systempars)
 		{
 			tempnode.line = 3;
 		}
+		else
+		{
+			tempnode.line = 3;
+		}
 		if (systempars.find(partcode)!=systempars.end())
 		{
 			cout << partcode << "参数重复，请检查数据;" << endl;
@@ -185,6 +203,12 @@ bool getsystemdata(string filename,sysmap &systempars)
 	}
 	return true;	
 }
+//从设置文件中获取优化模型的初始化数据
+/*
+初始化存在两种模式：
+mode 0:库房设计数据采用固定数据
+mode 1：库房设计数据从csv文件中读取
+*/
 bool getinpdata(inpmap &myinp, desighnode &stockdesigh,string flexsim,
 	string sysfile,string designfile,int mode)
 {
@@ -193,10 +217,13 @@ bool getinpdata(inpmap &myinp, desighnode &stockdesigh,string flexsim,
 		getflexsimmodedata(stockdesigh);
 	}
 	else
+	{
 		getdesighdatafromfile(designfile, stockdesigh);
+	}		
 	double stockwidth=10.0;
 	sysmap mysysmap;
 	getsystemdata(sysfile,mysysmap);
+	//读取flexsim仿真出库物流数据
 	ifstream infile;
 	infile.open(flexsim);
 	if (infile.fail())
@@ -247,6 +274,7 @@ bool getinpdata(inpmap &myinp, desighnode &stockdesigh,string flexsim,
 			break;
 		default:
 			cout << partcode << "出库门号错误，请检查数据。" << endl;
+			infile.close();
 			return false;
 		}
 		infile.getline(strtemp, 128, '\n');
@@ -254,6 +282,7 @@ bool getinpdata(inpmap &myinp, desighnode &stockdesigh,string flexsim,
 		if (curodistance<=0.0)
 		{
 			cout << partcode << "出库记录文件错误，请检测" << endl;
+			infile.close();
 			return false;
 		}
 		myinp[partcode].odistance += curodistance;
@@ -263,13 +292,56 @@ bool getinpdata(inpmap &myinp, desighnode &stockdesigh,string flexsim,
 		it->second.odistance /= it->second.partnum;
 		it->second.iflux = it->second.partnum % mysysmap[it->first].entrancepackage>0?1:0+ it->second.partnum / mysysmap[it->first].entrancepackage;
 	}
+	infile.close();
+	return true;
+}
+
+bool getresults(vector<int> solution, string resfile, Locplan myplan)
+{
+	vector<string> row[2];
+	double currowlength1, currowlength2;
+	currowlength1 = 0.0;
+	currowlength2 = 0.0;
+	for (size_t i = 0; i < solution.size(); i++)
+	{
+		if (currowlength1 <= currowlength2)
+		{
+			row[0].push_back(myplan.products[solution[i]].name);
+			currowlength1 += myplan.products[solution[i]].area;
+		}
+		else
+		{
+			row[1].push_back(myplan.products[solution[i]].name);
+			currowlength2 += myplan.products[solution[i]].area;
+		}
+	}
+	ofstream outres;
+	outres.open(resfile);
+	if (outres.fail())
+	{
+		cout << "输出文件" << resfile << "打开识别,请重新计算";
+		return false;
+	}
+	outres << "第一行物料编码,第二行物料编码"<<endl;
+	for (size_t  i = 0; i <row[0].size()||i<row[1].size(); i++)
+	{
+		if (i < row[0].size())
+		{
+			outres << row[0][i] << ",";
+		}
+		if (i < row[1].size())
+		{
+			outres << row[1][i] << endl;
+		}
+	}
+	outres.close();
 	return true;
 }
 
 int main()
 {
 	//初始化计算数据,从文件中读取产品数据
-	int mode = 0;
+	int mode = 1;
 	string sysfile="system.csv";
 	string recfile="out.csv";
 	string designfile = "designdata.csv";
@@ -308,8 +380,9 @@ int main()
 	std::vector<int > greedySolution = myplan.GetGreedySolotion();
 	std::cout << "greedysolution is "<<myplan.evaluation(greedySolution)<<std::endl;
 	//遗传算法
-	std::vector<int > GASolution = myplan.GA(1000,10000,500,0.02,0.6,true,"test.log");
+	std::vector<int > GASolution = myplan.GA(1000,10000,1000,0.02,0.5,true,"test.log");
 	std::cout << "final GAsolution is " << myplan.evaluation(GASolution) << std::endl;
+	getresults(GASolution, "myplan.csv", myplan);
     return 0;
 }
 
